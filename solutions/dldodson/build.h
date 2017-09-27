@@ -20,7 +20,6 @@ struct Bridge {
 		out << this->west << ' ' << this->east << ' ' << this->weight << endl;
 		return out.str();
 	}
-
 	static const string toString(const vector<Bridge> & bridges) {
 		ostringstream out;
 		for(auto bridge : bridges) {
@@ -31,7 +30,7 @@ struct Bridge {
 	}
 
 	const bool crosses(const Bridge & other) const {
-		return (this->west <= other.west && this->east >= other.east) || (this->west >= other.west && this->east <= other.east);
+		return (this->west < other.west && this->east > other.east) || (this->west > other.west && this->east < other.east);
 	}
 
 	const bool crosses(const vector<Bridge> & bridges) const {
@@ -80,38 +79,8 @@ struct Bridge {
 	int weight;
 };
 
-// struct Node {
-// 	Node(Node parent, Bridge obj): parent(parent), obj(obj) {}
-// 	Node(Bridge obj): parent(NULL), obj(obj) {}
-
-// 	void addChild(const Bridge & bridge) {
-// 		this->children.push_back(bridge);
-// 	}
-
-// 	const int getLargestWeight() {
-// 		if(this->children.size() == 0)
-// 			return this->obj.weight;
-// 		else {
-// 			auto weight  = 0;
-
-// 			for(auto bridge : this->children) {
-// 				auto childWeight = bridge.getLargestWeight();
-
-// 				if(childWeight > weight)
-// 					weight = childWeight;
-// 			}
-
-// 			return this->obj.weight + weight;
-// 		}
-// 	}
-
-// 	Node parent;
-// 	Bridge obj;
-// 	vector<const Bridge &> children;
-// };
-
-const int addWeights(const vector<Bridge> & bridges) {
-	int weight = 0;
+const unsigned int addWeights(const vector<Bridge> & bridges) {
+	unsigned int weight = 0;
 
 	for(auto bridge : bridges)
 		weight += bridge.weight;
@@ -119,78 +88,35 @@ const int addWeights(const vector<Bridge> & bridges) {
 	return weight;
 }
 
-const vector<vector<Bridge>> getAllSubsets(const vector<Bridge> & bridges/*, const int & index*/) {
-	vector<vector<Bridge>> allSubsets;
-	
-	for(auto i = 0; i < bridges.size(); i++) {
-		allSubsets.push_back(vector<Bridge>({bridges[i]}));
-		vector<Bridge> subset({bridges[i]});
+const unsigned int getMax(const vector<Bridge> & initialSet, vector<Bridge> & currentSet, const unsigned int index) {
+	unsigned int max = 0;
 
-		for(auto j = i + 1; j < bridges.size(); j++) {
-			auto bridge = bridges[j];
+	if(index < initialSet.size()) {
+		auto item = initialSet[index];
 
-			if(!bridge.crosses(subset) && !bridge.connectsToSameCity(subset)) {
-				subset.push_back(bridges[j]);
-				allSubsets.push_back(subset);
-			}
+		if(item.crosses(currentSet) || item.connectsToSameCity(currentSet)) {
+			return getMax(initialSet, currentSet, index + 1);
+		}
+		else {
+			currentSet.push_back(item);
+			auto withMe = getMax(initialSet, currentSet, index + 1);
+			currentSet.pop_back();
+			auto withoutMe = getMax(initialSet, currentSet, index + 1);
+
+			return (withMe > withoutMe ? withMe:withoutMe);
 		}
 	}
-
-	return allSubsets;
-}
-
-const int findLargestWeight(const vector<Bridge> & bridges, const int & index) {
-	return 0;
-	if(index == bridges.size() - 1)
-		return bridges[index].weight;
-
-	int subsetWeight = findLargestWeight(bridges, index + 1);
-	int weight = bridges[index].weight + subsetWeight;
-
-	return (weight > subsetWeight ? weight:subsetWeight);
-
-	//					OLD CODE
-
-	// for(auto i = index + 1; i < bridges.size(); i++) {
-	// 	Bridge bridge = bridges[i];
-	// 	cout << bridge.toString();
-	// 	if(!bridge.crosses(matches) && !bridge.connectsToSameCity(matches))
-	// 		matches.push_back(bridge);
-	// }
-
-	// int weight = addWeights(matches);
-	// otherWeight = findLargestWeight(bridges, index + 1);
-
-	// return (weight > otherWeight ? weight:otherWeight);
+	else return addWeights(currentSet);
 }
 
 const int build(const int & w, const int & e, const vector<vector<int>> & cbs) {
-	vector<Bridge> bridges;
-	vector<Bridge> searched;
+	vector<Bridge> bridges, workingSet;
 	for(auto i = 0; i < cbs.size(); i ++) {
 		Bridge newBridge(i, cbs[i][0], cbs[i][1], cbs[i][2]);
 		bridges.push_back(newBridge);
-		// cout << newBridge.toString() << endl;
 	}
 
-	auto subsets = getAllSubsets(bridges);
-	// auto winningSubset = subsets[0];
-	auto weight = 0;
-
-	for(auto subset : subsets) {
-		auto newWeight = addWeights(subset);
-		if(newWeight > weight) {
-			weight = newWeight;
-			// winningSubset = subset;
-		}
-	}
-
-	// cout << Bridge::toString(winningSubset) << endl;
-
-	return weight;
-	
-	return findLargestWeight(bridges, 0);
-	// return findLargestFromNode(bridges, searched, 0);
+	return getMax(bridges, workingSet, 0);
 }
 
 #endif
