@@ -9,13 +9,9 @@ const unsigned int getMax(const vector<vector<int>> & initialSet, vector<vector<
 		auto item = initialSet[index];
 		auto valid = true;
 
-		for(auto curr : currentSet) {
-			if((item[0] < curr[0] && item[1] > curr[1]) || (item[0] > curr[0] && item[1] < curr[1]))
+		for(auto curr : currentSet)
+			if((item[0] <= curr[0] && item[1] >= curr[1]) || (item[0] >= curr[0] && item[1] <= curr[1]))
 				valid = false;
-
-			if(item[0] == curr[0] || item[1] == curr[1])
-				valid = false;
-		}
 
 		if(valid) {
 			currentSet.push_back(item);
